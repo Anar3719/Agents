@@ -3,24 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="favicon.png">
-    <title>Ironfist | Command Center v3.0 (Firebase)</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
+    <link rel="icon" type="image/png" href="image_3.png">
+    <title>Ironfist | Command Center v2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root { --bg-deep: #0a0f1d; --bg-card: #161e31; --accent: #38bdf8; }
+        :root {
+            --bg-deep: #0a0f1d;
+            --bg-card: #161e31;
+            --accent: #38bdf8;
+        }
         body { background-color: var(--bg-deep); color: #e2e8f0; font-family: 'Inter', sans-serif; }
         .glass { background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-item.active { background: #1e293b; border-left: 3px solid var(--accent); color: white; }
-        textarea { background: #0f172a !important; color: #cbd5e1 !important; border: 1px solid #1e293b !important; min-height: 150px; resize: vertical; }
-        .label-style { font-size: 0.65rem; color: var(--accent); background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; }
-        .dot-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .sidebar-item { border-left: 3px solid transparent; transition: all 0.2s; cursor: pointer; }
+        .sidebar-item.active { background: #1e293b; border-left-color: var(--accent); color: white; }
+        textarea { 
+            background: #0f172a !important; 
+            color: #cbd5e1 !important; 
+            border: 1px solid #1e293b !important; 
+            min-height: 120px;
+            max-height: 800px;
+            resize: vertical;
+        }
+        .label-style {
+            font-size: 0.65rem;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
         .scrollbar::-webkit-scrollbar { width: 4px; }
         .scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
@@ -28,115 +42,90 @@
 <body class="h-screen flex overflow-hidden">
 
     <aside class="w-72 glass flex flex-col border-r border-slate-800">
-        <div class="p-6 flex items-center gap-3">
-            <div class="w-8 h-8 bg-sky-500 rounded flex items-center justify-center shadow-lg"><i class="fas fa-microchip text-white text-sm"></i></div>
-            <div>
-                <h1 class="text-[11px] font-bold text-white uppercase tracking-wider">Ironfist Squad</h1>
-                <p class="text-[9px] text-slate-500 uppercase">Cloud Sync Active</p>
+        <div class="p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-sky-500 rounded flex items-center justify-center">
+                    <i class="fas fa-hand-fist text-white text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-wider text-white uppercase">Ironfist Squad</h1>
+                    <p class="text-[9px] text-slate-500 uppercase">Command Center</p>
+                </div>
             </div>
         </div>
         
         <div class="px-4 mb-6">
-            <button onclick="createNewAgent()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded border border-slate-700 transition flex items-center justify-center gap-2 text-[10px] font-bold uppercase">
-                <i class="fas fa-plus text-sky-400"></i> New Agent
+            <button onclick="createNewAgent()" class="w-full bg-sky-600 hover:bg-sky-500 text-white py-2 px-4 rounded transition flex items-center justify-center gap-2 text-[11px] font-bold uppercase">
+                <i class="fas fa-plus"></i> New Agent
             </button>
         </div>
 
-        <nav id="agentList" class="flex-1 overflow-y-auto px-3 space-y-1 scrollbar"></nav>
-        
+        <nav id="agentList" class="flex-1 overflow-y-auto scrollbar px-3 space-y-1"></nav>
+
         <div class="p-4 border-t border-slate-800 text-[10px] text-slate-600 flex justify-between">
-            <span>DATABASE: FIRESTORE</span>
-            <span class="font-bold text-sky-500">v3.0</span>
+            <span>STORAGE: LOCAL</span>
+            <span>v2.2</span>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col">
         <header class="h-14 flex items-center justify-between px-8 border-b border-slate-800 bg-[#0d1324]">
             <div class="flex items-center gap-4">
-                <div class="group flex items-center gap-2 cursor-pointer" onclick="renameAgent()">
-                    <h2 id="activeAgentName" class="text-sm font-black text-white uppercase tracking-widest">Select Agent</h2>
-                    <i class="fas fa-pen text-[10px] text-slate-600 group-hover:text-sky-400"></i>
-                </div>
-                <div id="saveStatus" class="flex items-center gap-2 text-[10px] text-slate-500 font-medium ml-4">
-                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> CLOUD READY
-                </div>
+                <h2 id="activeAgentName" class="text-sm font-black text-white uppercase tracking-widest cursor-pointer" onclick="renameAgent()">---</h2>
+                <div id="saveStatus" class="text-[10px] text-slate-500"><i class="fas fa-circle text-emerald-500 mr-1"></i> READY</div>
             </div>
-            <div class="flex gap-5">
-                <button onclick="copyAllContext()" class="text-[10px] font-bold text-sky-400 uppercase"><i class="fas fa-copy mr-1"></i> Copy All</button>
-                <div class="w-[1px] h-4 bg-slate-800 self-center"></div>
-                <button onclick="deleteCurrentAgent()" class="text-[10px] font-bold text-rose-500 hover:text-rose-400 uppercase"><i class="fas fa-trash mr-1"></i> Delete</button>
+            <div class="flex gap-4">
+                <button onclick="copyAllContext()" class="text-sky-400 text-[11px] font-bold uppercase"><i class="fas fa-copy mr-1"></i> Copy All</button>
+                <button onclick="deleteCurrentAgent()" class="text-rose-500 text-[11px] font-bold uppercase"><i class="fas fa-trash mr-1"></i> Delete</button>
             </div>
         </header>
 
-        <div id="editorGrid" class="flex-1 p-8 overflow-y-auto opacity-0 transition-opacity scrollbar">
+        <div id="editorGrid" class="flex-1 p-8 overflow-y-auto scrollbar opacity-0 transition-opacity">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="flex flex-col"><span class="label-style">1. IDENTITY.md</span><textarea id="identity" oninput="autoSave()"></textarea></div>
-                <div class="flex flex-col"><span class="label-style">2. TOOLS.md</span><textarea id="tools" oninput="autoSave()"></textarea></div>
-                <div class="flex flex-col"><span class="label-style">3. SOUL.md</span><textarea id="soul" oninput="autoSave()"></textarea></div>
-                <div class="flex flex-col"><span class="label-style">4. AGENTS.md</span><textarea id="agents" oninput="autoSave()"></textarea></div>
-                <div class="flex flex-col"><span class="label-style text-amber-400 bg-amber-400/10">5. BOOTSTRAP.md</span><textarea id="bootstrap" oninput="autoSave()"></textarea></div>
-                <div class="flex flex-col"><span class="label-style">6. USER.md</span><textarea id="user" oninput="autoSave()"></textarea></div>
-                <div class="flex flex-col lg:col-span-2"><span class="label-style">7. HEARTBEAT.md</span><textarea id="heartbeat" oninput="autoSave()"></textarea></div>
+                <div><span class="label-style">IDENTITY.md</span><textarea id="identity" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
+                <div><span class="label-style">TOOLS.md</span><textarea id="tools" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
+                <div><span class="label-style">SOUL.md</span><textarea id="soul" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
+                <div><span class="label-style">AGENTS.md</span><textarea id="agents" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
+                <div><span class="label-style">BOOTSTRAP.md</span><textarea id="bootstrap" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
+                <div><span class="label-style">USER.md</span><textarea id="user" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
+                <div class="lg:col-span-2"><span class="label-style">HEARTBEAT.md</span><textarea id="heartbeat" class="w-full p-4 text-sm font-mono scrollbar" oninput="autoSave()"></textarea></div>
             </div>
-            <div class="h-20"></div>
         </div>
     </main>
 
     <script>
-        // Таны зурагнаас авсан Firebase тохиргоо
-        const firebaseConfig = {
-            apiKey: "AIzaSyA9xCN7W3uxaF0FutCLq4Tt00V1UXA65eg",
-            authDomain: "joymouth-e0898.firebaseapp.com",
-            projectId: "joymouth-e0898",
-            storageBucket: "joymouth-e0898.firebasestorage.app",
-            messagingSenderId: "716037708846",
-            appId: "1:716037708846:web:91a0d3c3666eda1ffb13bf",
-            measurementId: "G-DLXJ0K95FE"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        let agents = [];
+        let agents = JSON.parse(localStorage.getItem('ironfist_v2_agents')) || [];
         let currentAgentId = null;
         let saveTimeout;
 
-        // Өгөгдөл татах
-        async function init() {
-            db.collection("agents").orderBy("name").onSnapshot((snapshot) => {
-                agents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderAgentList();
-                if (!currentAgentId && agents.length > 0) loadAgent(agents[0].id);
-            });
+        const fields = ['identity', 'tools', 'soul', 'agents', 'bootstrap', 'user', 'heartbeat'];
+
+        function init() {
+            renderAgentList();
+            if (agents.length > 0) loadAgent(agents[0].id);
         }
 
-        // Шинэ агент үүсгэх
-        async function createNewAgent() {
+        function createNewAgent() {
             const name = prompt("Агентын нэр оруулах:");
             if (!name) return;
+
             const newAgent = {
+                id: Date.now(),
                 name: name.toUpperCase(),
-                data: {
-                    identity: `# IDENTITY: ${name}\n---\nname: ${name}\n---`,
-                    tools: "# TOOLS\n- Configured via Cloud",
-                    soul: "# SOUL\n- Data Integrity First",
-                    agents: "# AGENTS\n- Coordination Logic",
-                    bootstrap: "# BOOTSTRAP\n- Initialization",
-                    user: "# USER\n- Master Architect",
-                    heartbeat: "# HEARTBEAT\n- Monitoring"
-                }
+                data: fields.reduce((acc, f) => ({...acc, [f]: `# ${f.toUpperCase()}: ${name}\n---`}), {})
             };
-            const docRef = await db.collection("agents").add(newAgent);
-            loadAgent(docRef.id);
+
+            agents.push(newAgent);
+            saveToLocal();
+            renderAgentList();
+            loadAgent(newAgent.id);
         }
 
         function renderAgentList() {
             const list = document.getElementById('agentList');
-            list.innerHTML = agents.map(agent => `
-                <div onclick="loadAgent('${agent.id}')" id="btn-${agent.id}" class="sidebar-item group flex items-center justify-between px-4 py-3 rounded cursor-pointer text-slate-400 hover:bg-slate-800/50 transition ${currentAgentId === agent.id ? 'active' : ''}">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-terminal text-[10px] ${currentAgentId === agent.id ? 'text-sky-400' : 'text-slate-600'}"></i>
-                        <span class="text-[11px] font-bold uppercase">${agent.name}</span>
-                    </div>
+            list.innerHTML = agents.map(a => `
+                <div onclick="loadAgent(${a.id})" class="sidebar-item px-4 py-3 rounded ${currentAgentId === a.id ? 'active' : ''}">
+                    <span class="text-[11px] font-bold uppercase tracking-tighter">${a.name}</span>
                 </div>
             `).join('');
         }
@@ -146,62 +135,45 @@
             const agent = agents.find(a => a.id === id);
             if (!agent) return;
 
-            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`btn-${id}`)?.classList.add('active');
             document.getElementById('activeAgentName').innerText = agent.name;
             document.getElementById('editorGrid').style.opacity = '1';
-
-            const fields = ['identity', 'tools', 'soul', 'agents', 'bootstrap', 'user', 'heartbeat'];
-            fields.forEach(field => {
-                document.getElementById(field).value = agent.data[field] || "";
+            
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                el.value = agent.data[f] || "";
+                el.style.height = 'auto';
+                el.style.height = (el.scrollHeight + 2) + 'px';
             });
             renderAgentList();
         }
 
         function autoSave() {
-            document.getElementById('saveStatus').innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-amber-500 dot-pulse"></div> SYNCING...`;
+            document.getElementById('saveStatus').innerHTML = `<i class="fas fa-sync fa-spin mr-1"></i> SAVING...`;
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(async () => {
-                if (!currentAgentId) return;
-                const updatedData = {
-                    data: {
-                        identity: document.getElementById('identity').value,
-                        tools: document.getElementById('tools').value,
-                        soul: document.getElementById('soul').value,
-                        agents: document.getElementById('agents').value,
-                        bootstrap: document.getElementById('bootstrap').value,
-                        user: document.getElementById('user').value,
-                        heartbeat: document.getElementById('heartbeat').value
-                    }
-                };
-                await db.collection("agents").doc(currentAgentId).update(updatedData);
-                document.getElementById('saveStatus').innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> CLOUD SAVED`;
-            }, 1000);
+            saveTimeout = setTimeout(() => {
+                const idx = agents.findIndex(a => a.id === currentAgentId);
+                if (idx > -1) {
+                    fields.forEach(f => agents[idx].data[f] = document.getElementById(f).value);
+                    saveToLocal();
+                    document.getElementById('saveStatus').innerHTML = `<i class="fas fa-circle text-emerald-500 mr-1"></i> READY`;
+                }
+            }, 800);
         }
 
-        async function renameAgent() {
-            if (!currentAgentId) return;
-            const agent = agents.find(a => a.id === currentAgentId);
-            const newName = prompt("Шинэ нэр:", agent.name);
-            if (newName) await db.collection("agents").doc(currentAgentId).update({ name: newName.toUpperCase() });
-        }
-
-        async function deleteCurrentAgent() {
-            if (!currentAgentId) return;
+        function saveToLocal() { localStorage.setItem('ironfist_v2_agents', JSON.stringify(agents)); }
+        
+        function deleteCurrentAgent() {
             if (confirm("Устгах уу?")) {
-                await db.collection("agents").doc(currentAgentId).delete();
-                currentAgentId = null;
-                document.getElementById('editorGrid').style.opacity = '0';
-                document.getElementById('activeAgentName').innerText = "Select Agent";
+                agents = agents.filter(a => a.id !== currentAgentId);
+                saveToLocal();
+                location.reload();
             }
         }
 
         function copyAllContext() {
-            if (!currentAgentId) return;
             const agent = agents.find(a => a.id === currentAgentId);
-            const order = ['identity', 'tools', 'soul', 'agents', 'bootstrap', 'user', 'heartbeat'];
-            const fullText = order.map(key => agent.data[key]).join('\n\n---\n\n');
-            navigator.clipboard.writeText(fullText).then(() => alert("Бүх контекст хуулагдлаа!"));
+            const text = fields.map(f => agent.data[f]).join('\n\n---\n\n');
+            navigator.clipboard.writeText(text).then(() => alert("Copied!"));
         }
 
         init();
