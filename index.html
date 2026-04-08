@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="image_3.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <title>Ironfist | Command Center v3.0 (Firebase)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -21,6 +21,8 @@
         .label-style { font-size: 0.65rem; color: var(--accent); background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; }
         .dot-pulse { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .scrollbar::-webkit-scrollbar { width: 4px; }
+        .scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
@@ -40,7 +42,8 @@
             </button>
         </div>
 
-        <nav id="agentList" class="flex-1 overflow-y-auto px-3 space-y-1"></nav>
+        <nav id="agentList" class="flex-1 overflow-y-auto px-3 space-y-1 scrollbar"></nav>
+        
         <div class="p-4 border-t border-slate-800 text-[10px] text-slate-600 flex justify-between">
             <span>DATABASE: FIRESTORE</span>
             <span class="font-bold text-sky-500">v3.0</span>
@@ -60,11 +63,12 @@
             </div>
             <div class="flex gap-5">
                 <button onclick="copyAllContext()" class="text-[10px] font-bold text-sky-400 uppercase"><i class="fas fa-copy mr-1"></i> Copy All</button>
-                <button onclick="deleteCurrentAgent()" class="text-[10px] font-bold text-rose-500 uppercase"><i class="fas fa-trash mr-1"></i> Delete</button>
+                <div class="w-[1px] h-4 bg-slate-800 self-center"></div>
+                <button onclick="deleteCurrentAgent()" class="text-[10px] font-bold text-rose-500 hover:text-rose-400 uppercase"><i class="fas fa-trash mr-1"></i> Delete</button>
             </div>
         </header>
 
-        <div id="editorGrid" class="flex-1 p-8 overflow-y-auto opacity-0 transition-opacity">
+        <div id="editorGrid" class="flex-1 p-8 overflow-y-auto opacity-0 transition-opacity scrollbar">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="flex flex-col"><span class="label-style">1. IDENTITY.md</span><textarea id="identity" oninput="autoSave()"></textarea></div>
                 <div class="flex flex-col"><span class="label-style">2. TOOLS.md</span><textarea id="tools" oninput="autoSave()"></textarea></div>
@@ -74,20 +78,21 @@
                 <div class="flex flex-col"><span class="label-style">6. USER.md</span><textarea id="user" oninput="autoSave()"></textarea></div>
                 <div class="flex flex-col lg:col-span-2"><span class="label-style">7. HEARTBEAT.md</span><textarea id="heartbeat" oninput="autoSave()"></textarea></div>
             </div>
+            <div class="h-20"></div>
         </div>
     </main>
 
     <script>
-        // === ӨӨРИЙН FIREBASE ТОХИРГООГ ЭНД ОРУУЛНА УУ ===
+        // Таны зурагнаас авсан Firebase тохиргоо
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyA9xCN7W3uxaF0FutCLq4Tt00V1UXA65eg",
+            authDomain: "joymouth-e0898.firebaseapp.com",
+            projectId: "joymouth-e0898",
+            storageBucket: "joymouth-e0898.firebasestorage.app",
+            messagingSenderId: "716037708846",
+            appId: "1:716037708846:web:91a0d3c3666eda1ffb13bf",
+            measurementId: "G-DLXJ0K95FE"
         };
-        // =============================================
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -95,6 +100,7 @@
         let currentAgentId = null;
         let saveTimeout;
 
+        // Өгөгдөл татах
         async function init() {
             db.collection("agents").orderBy("name").onSnapshot((snapshot) => {
                 agents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -103,6 +109,7 @@
             });
         }
 
+        // Шинэ агент үүсгэх
         async function createNewAgent() {
             const name = prompt("Агентын нэр оруулах:");
             if (!name) return;
@@ -118,20 +125,20 @@
                     heartbeat: "# HEARTBEAT\n- Monitoring"
                 }
             };
-            await db.collection("agents").add(newAgent);
+            const docRef = await db.collection("agents").add(newAgent);
+            loadAgent(docRef.id);
         }
 
         function renderAgentList() {
             const list = document.getElementById('agentList');
             list.innerHTML = agents.map(agent => `
-                <div onclick="loadAgent('${agent.id}')" id="btn-${agent.id}" class="sidebar-item group flex items-center justify-between px-4 py-3 rounded cursor-pointer text-slate-400 hover:bg-slate-800/50 transition">
+                <div onclick="loadAgent('${agent.id}')" id="btn-${agent.id}" class="sidebar-item group flex items-center justify-between px-4 py-3 rounded cursor-pointer text-slate-400 hover:bg-slate-800/50 transition ${currentAgentId === agent.id ? 'active' : ''}">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-terminal text-[10px] ${currentAgentId === agent.id ? 'text-sky-400' : 'text-slate-600'}"></i>
                         <span class="text-[11px] font-bold uppercase">${agent.name}</span>
                     </div>
                 </div>
             `).join('');
-            if(currentAgentId) document.getElementById(`btn-${currentAgentId}`)?.classList.add('active');
         }
 
         function loadAgent(id) {
@@ -148,12 +155,14 @@
             fields.forEach(field => {
                 document.getElementById(field).value = agent.data[field] || "";
             });
+            renderAgentList();
         }
 
         function autoSave() {
             document.getElementById('saveStatus').innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-amber-500 dot-pulse"></div> SYNCING...`;
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
+                if (!currentAgentId) return;
                 const updatedData = {
                     data: {
                         identity: document.getElementById('identity').value,
@@ -171,24 +180,28 @@
         }
 
         async function renameAgent() {
+            if (!currentAgentId) return;
             const agent = agents.find(a => a.id === currentAgentId);
             const newName = prompt("Шинэ нэр:", agent.name);
             if (newName) await db.collection("agents").doc(currentAgentId).update({ name: newName.toUpperCase() });
         }
 
         async function deleteCurrentAgent() {
+            if (!currentAgentId) return;
             if (confirm("Устгах уу?")) {
                 await db.collection("agents").doc(currentAgentId).delete();
                 currentAgentId = null;
-                location.reload();
+                document.getElementById('editorGrid').style.opacity = '0';
+                document.getElementById('activeAgentName').innerText = "Select Agent";
             }
         }
 
         function copyAllContext() {
+            if (!currentAgentId) return;
             const agent = agents.find(a => a.id === currentAgentId);
             const order = ['identity', 'tools', 'soul', 'agents', 'bootstrap', 'user', 'heartbeat'];
             const fullText = order.map(key => agent.data[key]).join('\n\n---\n\n');
-            navigator.clipboard.writeText(fullText).then(() => alert("Copied!"));
+            navigator.clipboard.writeText(fullText).then(() => alert("Бүх контекст хуулагдлаа!"));
         }
 
         init();
